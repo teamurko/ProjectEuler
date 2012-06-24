@@ -162,9 +162,36 @@ Transitions buildTransitions()
     return result;
 }
 
-GameState next(const GameState& state)
+void updateTable(vector<double>& result, SquareType start,
+            double startProbability, const pair<size_t, double>& step)
 {
     static const Transitions transitions = buildTransitions();
+
+    SquareType firstLevel = move(start, step.first);
+    const double firstLevelP = startProbability * step.second;
+    const Transition& firstTransition = transitions.at(firstLevel);
+
+    for (const auto& bonusStep : firstTransition) {
+        const double secondLevelP = bonusStep.second * firstLevelP;
+        // WTF?! Why not to go sometimes to cc3 after ch3?
+        /*
+        const Transition& secondTransition =
+                            transitions.at(bonusStep.first);
+        for (const auto& secondStep : secondTransition) {
+            const size_t squareId =
+                    static_cast<size_t>(secondStep.first);
+            REQUIRE(secondStep.first != SquareType::G2J,
+                    "End in go to jail square");
+            result[numDoubles + 1][squareId] +=
+                        secondStep.second * secondLevelP;
+        }
+        */
+        result[static_cast<size_t>(bonusStep.first)] += secondLevelP;
+    }
+}
+
+GameState next(const GameState& state)
+{
     static const auto pointsPair = distribution(DiceSize(2, DIE_SIZE));
 
     REQUIRE(state.size() == NUM_DOUBLES, "Game should have "
@@ -189,29 +216,7 @@ GameState next(const GameState& state)
             const double startProbability = state[numDoubles][index];
 
             for (const pair<size_t, double>& step : usualPoints) {
-                SquareType firstLevel = move(start, step.first);
-                const double firstLevelP = startProbability * step.second;
-                const Transition& firstTransition =
-                                                transitions.at(firstLevel);
-                for (const auto& bonusStep : firstTransition) {
-                    const double secondLevelP =
-                                            bonusStep.second * firstLevelP;
-                    // WTF?! Why not to go sometimes to cc3 after ch3?
-                    /*
-                    const Transition& secondTransition =
-                                            transitions.at(bonusStep.first);
-                    for (const auto& secondStep : secondTransition) {
-                        const size_t squareId =
-                                    static_cast<size_t>(secondStep.first);
-                        REQUIRE(secondStep.first != SquareType::G2J,
-                                "End in go to jail square");
-                        result[0][squareId] += secondStep.second *
-                                                    secondLevelP;
-                    }
-                    */
-                    result[0][static_cast<size_t>(bonusStep.first)] +=
-                                                secondLevelP;
-                }
+                updateTable(result[0], start, startProbability, step);
             }
 
             for (const pair<size_t, double>& step : doublePoints) {
@@ -222,29 +227,8 @@ GameState next(const GameState& state)
                                         static_cast<size_t>(SquareType::JAIL);
                     result[0][jailIndex] += endProbability;
                 } else {
-                    SquareType firstLevel = move(start, step.first);
-                    const double firstLevelP = startProbability * step.second;
-                    const Transition& firstTransition =
-                                                transitions.at(firstLevel);
-                    for (const auto& bonusStep : firstTransition) {
-                        const double secondLevelP =
-                                            bonusStep.second * firstLevelP;
-                        // WTF?! Why not to go sometimes to cc3 after ch3?
-                        /*
-                        const Transition& secondTransition =
-                                            transitions.at(bonusStep.first);
-                        for (const auto& secondStep : secondTransition) {
-                            const size_t squareId =
-                                    static_cast<size_t>(secondStep.first);
-                            REQUIRE(secondStep.first != SquareType::G2J,
-                                    "End in go to jail square");
-                            result[numDoubles + 1][squareId] +=
-                                        secondStep.second * secondLevelP;
-                        }
-                        */
-                        result[numDoubles + 1][static_cast<size_t>(bonusStep.first)] +=
-                                                secondLevelP;
-                    }
+                    updateTable(result[numDoubles + 1], start,
+                                startProbability, step);
                 }
             }
         }
