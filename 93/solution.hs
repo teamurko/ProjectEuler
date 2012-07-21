@@ -8,7 +8,7 @@ eps :: (RealFrac a) => a
 eps = 0.00001
 
 digits :: (Enum a, Num a) => [a]
-digits = [1..9]
+digits = [0..9]
 
 isUnique :: (Eq a, Ord a)  => [a] -> Bool
 isUnique [] = True
