@@ -1,62 +1,21 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python
 
-import math
-import fractions
-import collections
+def mul(coefs, other):
+    return [other[0] * coefs[0] + 2 * other[1] * coefs[1],
+            other[0] * coefs[1] + other[1] * coefs[0]]
 
-def is_square(n):
-    if n < 0:
-        return False
-    if n <= 1:
-        return True
-    x = math.trunc(math.sqrt(n))
-    return x * x == n
-
-def fraction_expansion(n):
-    if is_square(n):
-        raise Exception("Argument should not be a square, but %d provided" % n)
-    y = math.trunc(math.sqrt(n))
-
-    a = 1
-    b = 0
-    c = 1
-    while (True):
-        r = (a * y + b) / c
-        yield r
-        a1 = c * a
-        b1 = c * (r * c - b)
-        c1 = a * a * n - (b - r * c) * (b - r * c)
-        a = a1
-        b = b1
-        c = c1
-        d = fractions.gcd(a, b)
-        d = fractions.gcd(c, d)
-        a = a / d
-        b = b / d
-        c = c / d
-
-def finite_continued_fractions(n):
-    coef = collections.deque([])
-    for c in fraction_expansion(n):
-        coef.appendleft(c)
-        a = 1
-        b = 0
-        for d in coef:
-            b, a = a, b
-            a = a + d * b
-        d = fractions.gcd(a, b)
-        a = a / d
-        b = b / d
-        yield (a, b)
-
+def pair_pow(coefs, index):
+    if index == 0:
+        return [1, 0]
+    return mul(coefs, pair_pow(coefs, index - 1))
 
 def main():
-    for c, x in finite_continued_fractions(2):
-        if c * (c - 1) == x * (x - 1):
-            print("%d blue discs of %d provide 1/2 chance to extract two blue discs" % (x, c))
-        else:
-            print("Not succeeded: %d discs, with %d blue discs" % (c, x))
-
+    index = 1
+    coefs = [1, 1]
+    limit = 2 * 10**12 - 1
+    while coefs[0] <= limit:
+        coefs = mul(coefs, [1, 1])
+    print (coefs[0] + 1) / 2, (coefs[1] + 1) / 2
 
 if __name__ == "__main__":
     main()
