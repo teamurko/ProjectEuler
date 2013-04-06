@@ -6,7 +6,7 @@ class EulerException(Exception):
 
 def calc_polynomial(x, coefs):
     """ Pass coefs in order [cN, cN-1, ..., c1, c0] """
-    return reduce(lambda value, coef: coef + x * value, reversed(coefs), 0)
+    return reduce(lambda value, coef: coef + x * value, coefs, 0)
 
 def task_polynomial(x):
     return calc_polynomial(x, [(-1)**i for i in range(11)])
